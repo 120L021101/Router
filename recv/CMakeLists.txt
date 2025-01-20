@@ -1,0 +1,1 @@
+gcc -I ./include -o main src/main.c src/pkg_rcver.c src/ethernet.c src/ipv4.c -lpcap

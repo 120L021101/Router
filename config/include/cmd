@@ -1,0 +1,2 @@
+gcc -o route_init route_init.c -I ../lib/ -L ../lib/cJSON/ -lcjson
+export LD_LIBRARY_PATH=/mnt/f/Quater1/Formal/Router/config/lib/cJSON:$LD_LIBRARY_PATH  

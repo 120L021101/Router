@@ -6,11 +6,11 @@ set(CMAKE_C_STANDARD 11)
 
 # 源文件
 set(SOURCES
-    src/main.c
-    src/arp.c
-    src/ethernet.c
-    src/hardware.c
-    src/util.c
+    main.c
+    arp.c
+    hardware.c
+    ethernet.c
+    util.c
 )
 
 # 添加可执行文件

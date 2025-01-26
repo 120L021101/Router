@@ -11,6 +11,7 @@ set(SOURCES
     src/ethernet.c
     src/hardware.c
     src/util.c
+    src/ipv4.c
 )
 
 # 添加可执行文件

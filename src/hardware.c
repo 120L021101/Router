@@ -91,3 +91,37 @@ Mac_address *get_interface_hardware_address(const char *name)
     }
     return NULL;
 }
+
+void get_ipv4_by_interface(const char *const interface, IPV4_address ipv4_address)
+{
+    pcap_if_t *alldevs;
+    pcap_if_t *dev;
+    pcap_addr_t *address;
+
+    pcap_findalldevs(&alldevs, NULL);
+
+    // 遍历所有接口
+    for (dev = alldevs; dev != NULL; dev = dev->next)
+    {
+        if (strcmp(dev->name, interface))
+            continue;
+
+        // 遍历该接口的所有地址
+        for (address = dev->addresses; address != NULL; address = address->next)
+        {
+            // 只查找IPv4地址
+            if (address->addr->sa_family == AF_INET)
+            {
+                struct sockaddr_in *ipv4_addr_in = (struct sockaddr_in *)address->addr;
+                struct in_addr inet_addr = ipv4_addr_in->sin_addr;
+                ipv4_address[0] = inet_addr.s_addr & 0xFF;
+                ipv4_address[1] = (inet_addr.s_addr >> 8) & 0xFF;
+                ipv4_address[2] = (inet_addr.s_addr >> 16) & 0xFF;
+                ipv4_address[3] = (inet_addr.s_addr >> 24) & 0xFF;
+                break;
+            }
+        }
+    }
+
+    pcap_freealldevs(alldevs);
+}

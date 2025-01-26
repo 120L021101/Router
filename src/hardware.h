@@ -2,6 +2,7 @@
 #define HARDWARE_H
 
 #include "ethernet.h"
+#include "ipv4.h"
 
 // 构建接口与硬件地址的关系对
 typedef struct
@@ -27,5 +28,8 @@ Mac_address *get_interface_hardware_address(const char *name);
     {                               \
         init_hardware_interfaces(); \
     } while (0)
+
+// 通过接口名字得到接口的ipv4地址
+void get_ipv4_by_interface(const char *const interface, IPV4_address ipv4_address);
 
 #endif

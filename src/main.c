@@ -12,6 +12,7 @@
 #include "ethernet.h"
 #include "hardware.h"
 #include "util.h"
+#include "ipv4.h"
 
 #define MAIN_LOG_PREFIX "[MAIN]: "
 
@@ -21,15 +22,24 @@
         REGISTER_ARP;            \
     } while (0)
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc < 2)
+    {
+        printf("Usage: %s -i <interface1> [interface2] [interface3] ...\n", argv[0]);
+        return 1;
+    }
+
+    uint32_t interface_num = 0;
+    const char **interfaces = parse_interfaces(argc, argv, &interface_num);
+
     INIT_UTIL;
-    INIT_HARDWARE;
+    INIT_HARDWARE(interfaces, interface_num);
     REGIESTER_PACKET_HANDLER;
 
-    listen_interfaces();
+    listen_interfaces(interfaces, interface_num);
 
-    unsigned char addr[4] = {172, 27, 208, 1};
+    unsigned char addr[4] = {192, 168, 1, 2};
     while (1)
     {
         Mac_address *raddr = lookup_hardware_address_by_arp(0x0800, addr, 4);

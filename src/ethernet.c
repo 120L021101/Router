@@ -86,7 +86,7 @@ void send_via_ethernet(const char *const interface, const Mac_address *const dst
     }
 }
 
-void register_frame_handler(uint16_t protocol_type, void (*handler)(unsigned char *, size_t))
+void register_frame_handler(uint16_t protocol_type, void (*handler)(unsigned char *, size_t, const char *const, Mac_address))
 {
     uint32_t num = ethernet_handler_table.current_num;
     ethernet_handler_table.entries[num].protocol_type = protocol_type;
@@ -171,7 +171,8 @@ static void packet_handler(unsigned char *user, const struct pcap_pkthdr *pkthdr
         {
             ethernet_handler_table.entries[i].handler(
                 ethernet_packet->data,
-                ethernet_packet->data_length);
+                ethernet_packet->data_length,
+                user, ethernet_packet->src_address);
             break;
         }
     }
@@ -194,7 +195,7 @@ static void *interface_listener(void *arg)
 }
 
 // 监听所有网络接口
-void listen_interfaces()
+void listen_interfaces(const char **const interfaces, uint32_t interface_num)
 {
     pthread_t threads[100];
     char *dev_names[100];
@@ -205,8 +206,16 @@ void listen_interfaces()
         dev_names[i] = interface_table.entries[i].name;
         if (!strcmp("lo", dev_names[i]))
             continue;
-        printf(ETHERNET_LOG_PREFIX "starts listening %s\n", dev_names[i]);
-        pthread_create(&threads[i], NULL, interface_listener, dev_names[i]);
+
+        for (int j = 0; j < interface_num; ++j)
+        {
+            if (!strcmp(dev_names[i], interfaces[j]))
+            {
+                printf(ETHERNET_LOG_PREFIX "starts listening %s\n", dev_names[i]);
+                pthread_create(&threads[i], NULL, interface_listener, dev_names[i]);
+                break;
+            }
+        }
     }
 
     // for (int j = 0; j < i; j++)

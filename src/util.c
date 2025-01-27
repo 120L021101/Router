@@ -1,5 +1,33 @@
 #include "util.h"
 
+const char **const parse_interfaces(int argc, char *argv[], uint32_t *ret_nums)
+{
+    char **interfaces = NULL;
+    *ret_nums = 0;
+
+    // 查找 "-i" 参数
+    for (int i = 1; i < argc; ++i)
+    {
+        if (strcmp(argv[1], "-i") == 0)
+        {
+            int j = i + 1;
+            while (j < argc && argv[j][0] != "-")
+                j++;
+
+            *ret_nums = j - i - 1;
+            interfaces = malloc(*ret_nums * sizeof(char *));
+            int idx = 0;
+            // 遍历所有接口参数
+            for (++i; i < j; i++)
+                interfaces[idx++] = argv[i];
+
+            break;
+        }
+    }
+
+    return interfaces;
+}
+
 // 预计算的 CRC32 查找表（使用多项式 0xEDB88320）
 uint32_t crc32_table[256];
 

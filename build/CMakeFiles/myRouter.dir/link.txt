@@ -1,1 +1,0 @@
-/usr/bin/cc CMakeFiles/myRouter.dir/src/main.c.o CMakeFiles/myRouter.dir/src/arp.c.o CMakeFiles/myRouter.dir/src/ethernet.c.o CMakeFiles/myRouter.dir/src/hardware.c.o CMakeFiles/myRouter.dir/src/util.c.o CMakeFiles/myRouter.dir/src/ipv4.c.o -o myRouter  -lpcap 

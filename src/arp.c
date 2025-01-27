@@ -54,6 +54,38 @@ static unsigned char *encode_arp_packet(const ARP_packet_data *const arp_packet_
     return ret_arr;
 }
 
+static void arp_reply(ARP_packet_data *request_packet, Mac_address hardware_address, uint32_t address_length,
+                      const char *const req_in_interface, Mac_address sender_addr)
+{
+    ARP_packet_data *reply_packet = malloc(sizeof(ARP_packet_data));
+
+    memcpy(reply_packet, request_packet, sizeof(ARP_packet_data));
+
+    reply_packet->opcode = ARP_OPCODE_REPLY;
+
+    // swap sender and target protocol address
+    for (int i = 0; i < reply_packet->byte_length_of_protocol_addr; ++i)
+    {
+        int temp = reply_packet->target_protocol_address[i];
+        reply_packet->target_protocol_address[i] = reply_packet->sender_protocol_address[i];
+        reply_packet->sender_protocol_address[i] = temp;
+    }
+
+    memcpy(reply_packet->target_hardware_address, reply_packet->sender_hardware_address, sizeof(Mac_address));
+
+    memcpy(reply_packet->sender_hardware_address, hardware_address, sizeof(Mac_address));
+
+    // set sender hardware address
+
+    size_t packet_size = 0;
+
+    unsigned char *encoded_packet = encode_arp_packet(reply_packet, &packet_size);
+
+    send_via_ethernet(req_in_interface, sender_addr, encoded_packet, packet_size, ETHERNET_UPPER_PRTOCOL_ARP);
+
+    free(reply_packet);
+}
+
 static void arp_request(uint32_t protocol_type, unsigned char *protocol_address, uint32_t address_length)
 {
     ARP_packet_data arp_packet_data;
@@ -162,7 +194,7 @@ static void show_table()
     printf(ARP_LOG_PREFIX "===========================\n");
 }
 
-void arp_handler(unsigned char *data, size_t data_length)
+void arp_handler(unsigned char *data, size_t data_length, const char *const ingoing_interface, Mac_address sender_eth_addr)
 {
     printf(ARP_LOG_PREFIX "start parsing arp\n");
     ARP_packet_data *arp_packet_data = parse_arp_data(data, data_length);
@@ -192,7 +224,33 @@ void arp_handler(unsigned char *data, size_t data_length)
 
     if (arp_packet_data->opcode == ARP_OPCODE_REQEUST)
     {
-        ;
+        // 检查是否是本机地址
+        for (int i = 0; i < interface_table.current_num; ++i)
+        {
+            Interface_address_pair *pair = &interface_table.entries[i];
+            IPV4_address ipv4_addr;
+            int j = 0;
+            switch (arp_packet_data->protocol_space)
+            {
+            case ETHERNET_UPPER_PRTOCOL_IPV4:
+                /* code */
+                get_ipv4_by_interface(pair->name, ipv4_addr);
+                for (j = 0; j < arp_packet_data->byte_length_of_protocol_addr; ++j)
+                {
+                    if (ipv4_addr[j] != arp_packet_data->target_protocol_address[j])
+                        break;
+                }
+                if (j == arp_packet_data->byte_length_of_protocol_addr)
+                {
+                    printf(ARP_LOG_PREFIX "ip address is %d.%d.%d.%d\n", ipv4_addr[0], ipv4_addr[1], ipv4_addr[2], ipv4_addr[3]);
+                    arp_reply(arp_packet_data, pair->mac_address, sizeof(Mac_address), ingoing_interface, sender_eth_addr);
+                }
+                break;
+
+            default:
+                break;
+            }
+        }
     }
     else if (arp_packet_data->opcode == ARP_OPCODE_REPLY)
     {

@@ -19,14 +19,14 @@ typedef struct
     Interface_address_pair entries[MAX_INTERFACE_PAIR_NUM];
 } Interface_table;
 
-void init_hardware_interfaces();
+void init_hardware_interfaces(const char **const interfaces, uint32_t interface_num);
 
 Mac_address *get_interface_hardware_address(const char *name);
 
-#define INIT_HARDWARE               \
-    do                              \
-    {                               \
-        init_hardware_interfaces(); \
+#define INIT_HARDWARE(interfaces, interface_num)             \
+    do                                                       \
+    {                                                        \
+        init_hardware_interfaces(interfaces, interface_num); \
     } while (0)
 
 // 通过接口名字得到接口的ipv4地址

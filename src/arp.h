@@ -51,7 +51,7 @@ typedef struct
 Mac_address *lookup_hardware_address_by_arp(uint32_t protocol_type, unsigned char *protocol_address, uint32_t address_length);
 
 ARP_packet_data *parse_arp_data(unsigned char *, size_t);
-void arp_handler(unsigned char *data, size_t);
+void arp_handler(unsigned char *data, size_t, const char *const, Mac_address);
 
 #define REGISTER_ARP                                                     \
     do                                                                   \

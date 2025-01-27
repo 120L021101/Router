@@ -1,3 +1,0 @@
-/mnt/f/Resume/cheat/Router/build/CMakeFiles/myRouter.dir
-/mnt/f/Resume/cheat/Router/build/CMakeFiles/edit_cache.dir
-/mnt/f/Resume/cheat/Router/build/CMakeFiles/rebuild_cache.dir

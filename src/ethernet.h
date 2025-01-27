@@ -35,7 +35,7 @@ typedef struct
 typedef struct
 {
     uint16_t protocol_type;
-    void (*handler)(unsigned char *, size_t);
+    void (*handler)(unsigned char *, size_t, const char *const, Mac_address);
 } Ethernet_handler;
 
 #define ETHERNET_HANDLER_MAX_ENTRY 100
@@ -50,8 +50,8 @@ void broadcast_ethernet(const unsigned char *const data, size_t data_size, uint1
 void send_via_ethernet(const char *const interface, const Mac_address *const dst_addr,
                        const unsigned char *const data, size_t data_size, uint16_t protocol_type);
 
-void register_frame_handler(uint16_t protocol_type, void (*handler)(unsigned char *, size_t));
+void register_frame_handler(uint16_t protocol_type, void (*handler)(unsigned char *, size_t, const char *const, Mac_address));
 
-void listen_interfaces();
+void listen_interfaces(const char **const interfaces, uint32_t interface_num);
 
 #endif

@@ -48,7 +48,7 @@ static Mac_address *get_mac_address(const char *iface)
     return ret_address;
 }
 
-void init_hardware_interfaces()
+void init_hardware_interfaces(const char **const interfaces, uint32_t interface_num)
 {
     interface_table.current_num = 0;
     pcap_if_t *alldevs;
@@ -64,17 +64,23 @@ void init_hardware_interfaces()
     // 遍历每个网络接口
     for (d = alldevs; d != NULL; d = d->next)
     {
-        // 获取该接口的 MAC 地址
-        Mac_address *mac_address = get_mac_address(d->name);
-        interface_table.entries[interface_table.current_num].name = (char *)malloc(100);
-        strcpy(interface_table.entries[interface_table.current_num].name, d->name);
-        if (mac_address)
+        for (int j = 0; j < interface_num; ++j)
         {
-            printf(HARDWARE_LOG_PREFIX "Interface Name: %s\n", interface_table.entries[interface_table.current_num].name);
-            memcpy(interface_table.entries[interface_table.current_num++].mac_address, *mac_address, sizeof(Mac_address));
+            if (!strcmp(interfaces[j], d->name))
+            {
+                // 获取该接口的 MAC 地址
+                Mac_address *mac_address = get_mac_address(d->name);
+                interface_table.entries[interface_table.current_num].name = (char *)malloc(100);
+                strcpy(interface_table.entries[interface_table.current_num].name, d->name);
+                if (mac_address)
+                {
+                    printf(HARDWARE_LOG_PREFIX "Interface Name: %s\n", interface_table.entries[interface_table.current_num].name);
+                    memcpy(interface_table.entries[interface_table.current_num++].mac_address, *mac_address, sizeof(Mac_address));
+                }
+
+                break;
+            }
         }
-        else
-            continue;
     }
     // 释放内存
     pcap_freealldevs(alldevs);

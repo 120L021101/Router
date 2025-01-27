@@ -14,6 +14,7 @@ set(SOURCES
     src/ipv4.c
     src/route.c
     src/udp.c
+    src/icmp.c
 )
 
 # 添加可执行文件

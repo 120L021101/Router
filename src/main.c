@@ -14,6 +14,8 @@
 #include "util.h"
 #include "ipv4.h"
 #include "route.h"
+#include "udp.h"
+#include "icmp.h"
 
 #define MAIN_LOG_PREFIX "[MAIN]: "
 
@@ -21,6 +23,9 @@
     do                           \
     {                            \
         REGISTER_ARP;            \
+        REGISTER_IPV4;           \
+        REGISTER_UDP_IN_IPV4;    \
+        REGISTER_ICMP_IN_IPV4;   \
     } while (0)
 
 int main(int argc, char *argv[])

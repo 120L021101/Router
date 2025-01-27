@@ -1,8 +1,10 @@
 #ifndef HARDWARE_H
 #define HARDWARE_H
 
-#include "ethernet.h"
 #include "ipv4.h"
+
+typedef unsigned char IPV4_address[4];
+typedef unsigned char IPV4_mask[4];
 
 // 构建接口与硬件地址的关系对
 typedef struct

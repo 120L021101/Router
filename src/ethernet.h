@@ -45,7 +45,7 @@ typedef struct
     Ethernet_handler entries[ETHERNET_HANDLER_MAX_ENTRY];
 } Ethernet_handler_table;
 
-void broadcast_ethernet(const unsigned char *const data, size_t data_size, uint16_t protocol_type);
+void broadcast_ethernet(const unsigned char *const data, size_t data_size, uint16_t protocol_type, const char *const ingoing_interface);
 
 void send_via_ethernet(const char *const interface, const Mac_address *const dst_addr,
                        const unsigned char *const data, size_t data_size, uint16_t protocol_type);

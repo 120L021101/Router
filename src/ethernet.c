@@ -26,15 +26,12 @@ static int send_packet(const unsigned char *packet, int len, const char *interfa
         pcap_close(handle);
         return -1;
     }
-
-    printf("Packet sent successfully on interface %s\n", interface_name);
-
     // 关闭 pcap 句柄
     pcap_close(handle);
     return 0;
 }
 
-void broadcast_ethernet(const unsigned char *const data, size_t data_size, uint16_t protocol_type)
+void broadcast_ethernet(const unsigned char *const data, size_t data_size, uint16_t protocol_type, const char *const ingoing_interface)
 {
     unsigned char *ethernet_frame = (unsigned char *)malloc(14 + data_size);
 
@@ -51,12 +48,14 @@ void broadcast_ethernet(const unsigned char *const data, size_t data_size, uint1
     {
         const char *interface_name = interface_table.entries[i].name;
         const Mac_address *src_addr = &interface_table.entries[i].mac_address;
-        if (!strcmp("lo", interface_name))
+        if (!strcmp("lo", interface_name) || (ingoing_interface && !strcmp(ingoing_interface, interface_name)))
             continue;
         // 设置源地址
         memcpy(ethernet_frame + sizeof(Mac_address), *src_addr, sizeof(Mac_address));
         send_packet(ethernet_frame, 14 + data_size, interface_name);
     }
+
+    free(ethernet_frame);
 }
 
 void send_via_ethernet(const char *const interface, const Mac_address *const dst_addr,
@@ -104,7 +103,7 @@ static Ethernet_packet *parse_ethernet(const unsigned char *packet, size_t packe
     ethernet_packet->data = packet + 14;
     ethernet_packet->data_length = packet_length - 14;
 
-    printf(ETHERNET_LOG_PREFIX "protocol is: %2X\n", ethernet_packet->protocol);
+    // printf(ETHERNET_LOG_PREFIX "protocol is: %2X\n", ethernet_packet->protocol);
 
     return ethernet_packet;
 }
@@ -125,9 +124,7 @@ static char is_broadcast(const Mac_address *const mac_addr)
     for (int i = 0; i < 6; ++i)
     {
         if ((*mac_addr)[i] != 0xFF)
-        {
             return 0;
-        }
     }
     return 1;
 }
@@ -138,31 +135,40 @@ static char if_send_to_me_explicitly(const Mac_address *const mac_addr)
     {
         Interface_address_pair *entry = &interface_table.entries[i];
         if (ethernet_addr_equal(&entry->mac_address, mac_addr))
-        {
             return 1;
-        }
     }
     return 0;
+}
+
+static char if_me_sent_frame(const Mac_address *const mac_addr)
+{
+    return if_send_to_me_explicitly(mac_addr);
 }
 
 // 处理数据包的回调函数
 static void packet_handler(unsigned char *user, const struct pcap_pkthdr *pkthdr, const unsigned char *packet)
 {
-    // for (int i = 0; i < pkthdr->len; ++i)
-    // {
-    //     printf("%2x ", packet[i]);
-    // }
-    // printf("\n");
-
-    printf(ETHERNET_LOG_PREFIX "[接口: %s] 捕获到数据包！长度: %d 字节\n", (char *)user, pkthdr->len);
     Ethernet_packet *ethernet_packet = parse_ethernet(packet, pkthdr->len);
 
     // 过滤掉不发给自己的数据包
-    if (!is_broadcast(&ethernet_packet->dst_address) &&
-        !if_send_to_me_explicitly(&ethernet_packet->dst_address))
+    // 1. 自己发的，肯定不是发给自己的
+    if (if_me_sent_frame(&ethernet_packet->src_address))
     {
         return;
     }
+    // 2. 如果不是广播地址，判断一下是否是发给自己的
+    else if (!is_broadcast(&ethernet_packet->dst_address) &&
+             !if_send_to_me_explicitly(&ethernet_packet->dst_address))
+    {
+        return;
+    }
+    // 3. 如果是广播地址，那么首先需要把这个给广播出去再处理
+    else if (is_broadcast(&ethernet_packet->dst_address))
+    {
+        broadcast_ethernet(ethernet_packet->data, ethernet_packet->data_length, ethernet_packet->protocol, user);
+    }
+
+    printf(ETHERNET_LOG_PREFIX "[接口: %s] 捕获到数据包！长度: %d 字节\n", (char *)user, pkthdr->len);
 
     printf(ETHERNET_LOG_PREFIX "captured packet protocol is: %d\n", ethernet_packet->protocol);
     for (int i = 0; i < ethernet_handler_table.current_num; ++i)

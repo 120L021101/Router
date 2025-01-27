@@ -12,6 +12,8 @@ set(SOURCES
     src/hardware.c
     src/util.c
     src/ipv4.c
+    src/route.c
+    src/udp.c
 )
 
 # 添加可执行文件

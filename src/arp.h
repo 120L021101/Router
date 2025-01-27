@@ -48,6 +48,8 @@ typedef struct
     ARP_table_entry table_entries[MAX_ARP_ENTRY_NUM];
 } ARP_table;
 
+void init_ipv4_subnet_arp();
+
 Mac_address *lookup_hardware_address_by_arp(uint32_t protocol_type, unsigned char *protocol_address, uint32_t address_length);
 
 ARP_packet_data *parse_arp_data(unsigned char *, size_t);

@@ -30,6 +30,6 @@ Mac_address *get_interface_hardware_address(const char *name);
     } while (0)
 
 // 通过接口名字得到接口的ipv4地址
-void get_ipv4_by_interface(const char *const interface, IPV4_address ipv4_address);
+void get_ipv4_by_interface(const char *const interface, IPV4_address ipv4_address, IPV4_mask ipv4_mask);
 
 #endif

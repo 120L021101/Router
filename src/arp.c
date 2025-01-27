@@ -112,7 +112,7 @@ static void arp_request(uint32_t protocol_type, unsigned char *protocol_address,
         case (0x0800):
             arp_packet_data.sender_protocol_address = malloc(sizeof(4));
             get_ipv4_by_interface(interface_table.entries[i].name,
-                                  arp_packet_data.sender_protocol_address);
+                                  arp_packet_data.sender_protocol_address, NULL);
             break;
         default:
             break;
@@ -121,7 +121,28 @@ static void arp_request(uint32_t protocol_type, unsigned char *protocol_address,
         unsigned char *packet = encode_arp_packet(&arp_packet_data, &packet_size);
         const char *const interface = interface_table.entries[i].name;
         Mac_address dst_addr = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+        // printf(ARP_LOG_PREFIX "sender ip address ISISISISISISISIS\n%d.%d.%d.%d\n",
+        //        arp_packet_data.sender_protocol_address[0],
+        //        arp_packet_data.sender_protocol_address[1],
+        //        arp_packet_data.sender_protocol_address[2],
+        //        arp_packet_data.sender_protocol_address[3]);
         send_via_ethernet(interface, &dst_addr, packet, packet_size, ETHERNET_UPPER_PRTOCOL_ARP);
+    }
+}
+
+void init_ipv4_subnet_arp()
+{
+    for (int i = 0; i < interface_table.current_num; ++i)
+    {
+        Interface_address_pair *entry = &interface_table.entries[i];
+        IPV4_address addr;
+        IPV4_mask mask;
+        get_ipv4_by_interface(entry->name, addr, mask);
+        for (int i = 0; i < sizeof(IPV4_address); ++i)
+        {
+            addr[i] |= ~mask[i];
+        }
+        lookup_hardware_address_by_arp(ETHERNET_UPPER_PRTOCOL_IPV4, addr, 4);
     }
 }
 
@@ -222,6 +243,8 @@ void arp_handler(unsigned char *data, size_t data_length, const char *const ingo
 
     printf(ARP_LOG_PREFIX "finish parsing arp\n");
 
+    printf(ARP_LOG_PREFIX "OPCODE is: %d\n", arp_packet_data->opcode);
+
     if (arp_packet_data->opcode == ARP_OPCODE_REQEUST)
     {
         // 检查是否是本机地址
@@ -229,12 +252,16 @@ void arp_handler(unsigned char *data, size_t data_length, const char *const ingo
         {
             Interface_address_pair *pair = &interface_table.entries[i];
             IPV4_address ipv4_addr;
+            IPV4_mask ipv4_mask;
             int j = 0;
             switch (arp_packet_data->protocol_space)
             {
             case ETHERNET_UPPER_PRTOCOL_IPV4:
-                /* code */
-                get_ipv4_by_interface(pair->name, ipv4_addr);
+                get_ipv4_by_interface(pair->name, ipv4_addr, ipv4_mask);
+                printf(ARP_LOG_PREFIX "正在检查 %d.%d.%d.%d\n", ipv4_addr[0], ipv4_addr[1], ipv4_addr[2], ipv4_addr[3]);
+                printf(ARP_LOG_PREFIX "正在检查 %d.%d.%d.%d\n", ipv4_mask[0], ipv4_mask[1], ipv4_mask[2], ipv4_mask[3]);
+
+                // 检查是否是显式的发给自己
                 for (j = 0; j < arp_packet_data->byte_length_of_protocol_addr; ++j)
                 {
                     if (ipv4_addr[j] != arp_packet_data->target_protocol_address[j])
@@ -245,6 +272,29 @@ void arp_handler(unsigned char *data, size_t data_length, const char *const ingo
                     printf(ARP_LOG_PREFIX "ip address is %d.%d.%d.%d\n", ipv4_addr[0], ipv4_addr[1], ipv4_addr[2], ipv4_addr[3]);
                     arp_reply(arp_packet_data, pair->mac_address, sizeof(Mac_address), ingoing_interface, sender_eth_addr);
                 }
+
+                // 如果是和自己位于同一个网络的广播地址
+                if (is_broadcast_ipv4(arp_packet_data->target_protocol_address, ipv4_mask) &&
+                    is_the_same_subnet_ipv4(ipv4_addr, arp_packet_data->target_protocol_address, ipv4_mask))
+                {
+                    // 将target设置成自己
+                    printf(ARP_LOG_PREFIX "broadcast ip address is %d.%d.%d.%d\n",
+                           arp_packet_data->target_protocol_address[0],
+                           arp_packet_data->target_protocol_address[1],
+                           arp_packet_data->target_protocol_address[2],
+                           arp_packet_data->target_protocol_address[3]);
+                    for (int i = 0; i < sizeof(IPV4_address); ++i)
+                    {
+                        arp_packet_data->target_protocol_address[i] = ipv4_addr[i];
+                    }
+                    printf(ARP_LOG_PREFIX "turns ip address to %d.%d.%d.%d\n",
+                           arp_packet_data->target_protocol_address[0],
+                           arp_packet_data->target_protocol_address[1],
+                           arp_packet_data->target_protocol_address[2],
+                           arp_packet_data->target_protocol_address[3]);
+                    arp_reply(arp_packet_data, pair->mac_address, sizeof(Mac_address), ingoing_interface, sender_eth_addr);
+                }
+
                 break;
 
             default:
@@ -297,6 +347,6 @@ void arp_handler(unsigned char *data, size_t data_length, const char *const ingo
 
     free(arp_packet_data);
 
-    // show_table();
+    show_table();
     return;
 }

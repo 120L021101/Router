@@ -53,3 +53,16 @@ char is_broadcast_ipv4(IPV4_address addr, IPV4_mask mask)
     }
     return 1;
 }
+
+char is_the_same_subnet_ipv4(IPV4_address addr1, IPV4_address addr2, IPV4_mask mask)
+{
+    IPV4_address mask_addr1, mask_addr2;
+    for (int i = 0; i < sizeof(IPV4_address); ++i)
+    {
+        mask_addr1[i] = addr1[i] & mask[i];
+        mask_addr2[i] = addr2[i] & mask[i];
+        if (mask_addr1[i] != mask_addr2[i])
+            return 0;
+    }
+    return 1;
+}

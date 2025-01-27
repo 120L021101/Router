@@ -98,7 +98,7 @@ Mac_address *get_interface_hardware_address(const char *name)
     return NULL;
 }
 
-void get_ipv4_by_interface(const char *const interface, IPV4_address ipv4_address)
+void get_ipv4_by_interface(const char *const interface, IPV4_address ipv4_address, IPV4_mask ipv4_mask)
 {
     pcap_if_t *alldevs;
     pcap_if_t *dev;
@@ -111,10 +111,11 @@ void get_ipv4_by_interface(const char *const interface, IPV4_address ipv4_addres
     {
         if (strcmp(dev->name, interface))
             continue;
-
+        // printf("%s %s\n", dev->name, interface);
         // 遍历该接口的所有地址
         for (address = dev->addresses; address != NULL; address = address->next)
         {
+            // printf("%d %d\n", address->addr->sa_family, AF_INET);
             // 只查找IPv4地址
             if (address->addr->sa_family == AF_INET)
             {
@@ -124,7 +125,19 @@ void get_ipv4_by_interface(const char *const interface, IPV4_address ipv4_addres
                 ipv4_address[1] = (inet_addr.s_addr >> 8) & 0xFF;
                 ipv4_address[2] = (inet_addr.s_addr >> 16) & 0xFF;
                 ipv4_address[3] = (inet_addr.s_addr >> 24) & 0xFF;
-                break;
+            }
+
+            // 获取子网掩码
+            if (ipv4_mask != NULL && address->broadaddr != NULL)
+            {
+                struct sockaddr_in *netmask_in = (struct sockaddr_in *)address->broadaddr;
+                struct in_addr netmask_addr = netmask_in->sin_addr;
+                // ipv4_mask[0] = netmask_addr.s_addr & 0xFF;
+                // ipv4_mask[1] = (netmask_addr.s_addr >> 8) & 0xFF;
+                // ipv4_mask[2] = (netmask_addr.s_addr >> 16) & 0xFF;
+                // ipv4_mask[3] = (netmask_addr.s_addr >> 24) & 0xFF;
+                ipv4_mask[0] = ipv4_mask[1] = ipv4_mask[2] = 0xFF;
+                // printf("%d.%d.%d.%d\n", ipv4_mask[0], ipv4_mask[1], ipv4_mask[2], ipv4_mask[3]);
             }
         }
     }

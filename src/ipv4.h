@@ -10,4 +10,6 @@ char is_ipv4_addr_mask_equal(IPV4_address addr1, IPV4_address addr, IPV4_mask ma
 
 char is_broadcast_ipv4(IPV4_address addr, IPV4_mask mask);
 
+char is_the_same_subnet_ipv4(IPV4_address addr1, IPV4_address addr2, IPV4_mask mask);
+
 #endif

@@ -125,7 +125,7 @@ uint16_t ip_checksum(void *vdata, size_t length)
     uint32_t sum = 0;
     while (length > 1)
     {
-        sum += *data++;
+        sum += ntohs(*data++);
         length -= 2;
     }
     if (length == 1)
@@ -151,7 +151,8 @@ static unsigned char *encode_ipv4_packet(Ipv4_packet *packet)
 
     memcpy(data + 20, packet->data, packet->data_length);
 
-    *(uint16_t *)(data + 10) = ip_checksum(data, 20 + packet->data_length);
+    // on the header only
+    *(uint16_t *)(data + 10) = htons(ip_checksum(data, 20));
 
     return data;
 }
@@ -168,6 +169,8 @@ void send_ipv4_packet(unsigned char *data, size_t data_length, IPV4_address src_
     sent_packet->total_length = 20 + data_length;
     sent_packet->ttl = 0x40;
     sent_packet->version_ihl = 0x45;
+    sent_packet->flags_offset = 0x4000;
+    sent_packet->id = (uint16_t)rand();
 
     unsigned char *data_sent = encode_ipv4_packet(sent_packet);
 

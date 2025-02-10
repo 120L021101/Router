@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <time.h>
 
 #include "arp.h"
 #include "ethernet.h"
@@ -44,21 +45,38 @@
 //     return (uint16_t)(~sum); // 取反码
 // }
 
+uint16_t ip_checksum2(void *vdata, size_t length)
+{
+    uint16_t *data = (uint16_t *)vdata;
+    data[5] = 0;
+    uint32_t sum = 0;
+    while (length > 1)
+    {
+        sum += ntohs(*data++);
+        length -= 2;
+    }
+    if (length == 1)
+        sum += *(uint8_t *)data;
+    while (sum >> 16)
+        sum = (sum & 0xFFFF) + (sum >> 16);
+    return (uint16_t)(~sum); // 取反码
+}
+
 int main(int argc, char *argv[])
 {
     // unsigned char data[] = {
-    //     0x08, 0x00, 0x5D, 0xB0, 0x00, 0x08, 0x00, 0x09,
-    //     0x6E, 0x13, 0xAA, 0x67, 0x00, 0x00, 0x00, 0x00,
-    //     0xBD, 0xF0, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00,
-    //     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-    //     0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
-    //     0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
-    //     0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F,
-    //     0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
-    // size_t data_length = 64;
+    //     0x45, 0x00, 0x00, 0x54, // 版本 & 头部长度, 服务类型, 总长度
+    //     0xC1, 0xA7, 0x40, 0x00, // 标识符, 标志 & 片偏移
+    //     0x40, 0x01, 0xF5, 0xAD, // TTL, 协议 (ICMP), 头部校验和
+    //     0xC0, 0xA8, 0x01, 0x02, // 源 IP 地址 (192.168.1.2)
+    //     0xC0, 0xA8, 0x01, 0x01  // 目标 IP 地址 (192.168.1.1)
+    // };
+    // size_t data_length = 20;
 
-    // uint16_t checksum = icmp_checksum2(data, data_length);
+    // uint16_t checksum = ip_checksum2(data, data_length);
     // printf("%2X%2X\n", (checksum & 0xFF00) >> 8, checksum & 0xFF);
+
+    srand(time(NULL));
 
     if (argc < 2)
     {

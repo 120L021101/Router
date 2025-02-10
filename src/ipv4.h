@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "ethernet.h"
 #include "arp.h"

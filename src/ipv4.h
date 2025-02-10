@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "ethernet.h"
+#include "arp.h"
 
 #define IPV4_UPPER_PROTOCOL_ICMP 1
 #define IPV4_UPPER_PROTOCOL_TCP 6
@@ -43,6 +44,8 @@ char is_the_same_subnet_ipv4(IPV4_address addr1, IPV4_address addr2, IPV4_mask m
 
 void ipv4_handler(unsigned char *data, size_t, const char *const, Mac_address);
 
+void send_ipv4_packet(unsigned char *data, size_t data_length, IPV4_address src_addr, IPV4_address dst_addr);
+
 #define REGISTER_IPV4                                                      \
     do                                                                     \
     {                                                                      \
@@ -53,7 +56,7 @@ void ipv4_handler(unsigned char *data, size_t, const char *const, Mac_address);
 typedef struct
 {
     uint16_t protocol_type;
-    void (*handler)(unsigned char *, size_t, IPV4_address);
+    void (*handler)(unsigned char *, size_t, Ipv4_packet *);
 } Ipv4_handler;
 
 #define IPV4_HANDLER_MAX_ENTRY 100
@@ -63,6 +66,6 @@ typedef struct
     Ipv4_handler entries[IPV4_HANDLER_MAX_ENTRY];
 } Ipv4_handler_table;
 
-void register_ipv4_packet_handler(uint16_t protocol_type, void (*handler)(unsigned char *, size_t, IPV4_address));
+void register_ipv4_packet_handler(uint16_t protocol_type, void (*handler)(unsigned char *, size_t, Ipv4_packet *));
 
 #endif

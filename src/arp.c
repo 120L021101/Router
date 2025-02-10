@@ -21,6 +21,20 @@ void release_ARP_packet(ARP_packet_data *arp_packet_data)
     free(arp_packet_data);
 }
 
+static void show_table()
+{
+    printf(ARP_LOG_PREFIX "===========================\n");
+    for (int i = 0; i < arp_table.current_num; ++i)
+    {
+        ARP_table_entry *entry = &arp_table.table_entries[i];
+        printf(ARP_LOG_PREFIX "%d: %d, %2X.%2X.%2X.%2X.%2X.%2X %d.%d.%d.%d \n", i, entry->protocol_type,
+               entry->hardware_address[0], entry->hardware_address[1], entry->hardware_address[2],
+               entry->hardware_address[3], entry->hardware_address[4], entry->hardware_address[5],
+               entry->protocol_address[0], entry->protocol_address[1], entry->protocol_address[2], entry->protocol_address[3]);
+    }
+    printf(ARP_LOG_PREFIX "===========================\n");
+}
+
 static unsigned char *encode_arp_packet(const ARP_packet_data *const arp_packet_data,
                                         size_t *ret_size)
 {
@@ -167,6 +181,8 @@ Mac_address *lookup_hardware_address_by_arp(uint32_t protocol_type, unsigned cha
     // 没有找到，发送ARP REQUEST
     arp_request(protocol_type, protocol_address, address_length);
 
+    show_table();
+
     return NULL; // NULL 让客户端重试，如果未来有多线程功能，这个部分可以通过不断检查表来实现
 }
 
@@ -199,20 +215,6 @@ ARP_packet_data *parse_arp_data(unsigned char *data, size_t data_length)
            ret_arp_packet->byte_length_of_protocol_addr);
 
     return ret_arp_packet;
-}
-
-static void show_table()
-{
-    printf(ARP_LOG_PREFIX "===========================\n");
-    for (int i = 0; i < arp_table.current_num; ++i)
-    {
-        ARP_table_entry *entry = &arp_table.table_entries[i];
-        printf(ARP_LOG_PREFIX "%d: %d, %2X.%2X.%2X.%2X.%2X.%2X %d.%d.%d.%d \n", i, entry->protocol_type,
-               entry->hardware_address[0], entry->hardware_address[1], entry->hardware_address[2],
-               entry->hardware_address[3], entry->hardware_address[4], entry->hardware_address[5],
-               entry->protocol_address[0], entry->protocol_address[1], entry->protocol_address[2], entry->protocol_address[3]);
-    }
-    printf(ARP_LOG_PREFIX "===========================\n");
 }
 
 void arp_handler(unsigned char *data, size_t data_length, const char *const ingoing_interface, Mac_address sender_eth_addr)

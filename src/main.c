@@ -28,8 +28,38 @@
         REGISTER_ICMP_IN_IPV4;   \
     } while (0)
 
+// uint16_t icmp_checksum2(uint16_t *data, int len)
+// {
+//     data[1] = 0;
+//     uint32_t sum = 0;
+//     while (len > 1)
+//     {
+//         sum += ntohs(*data++);
+//         len -= 2;
+//     }
+//     if (len == 1)
+//         sum += *(uint8_t *)data;
+//     while (sum >> 16)
+//         sum = (sum & 0xFFFF) + (sum >> 16);
+//     return (uint16_t)(~sum); // 取反码
+// }
+
 int main(int argc, char *argv[])
 {
+    // unsigned char data[] = {
+    //     0x08, 0x00, 0x5D, 0xB0, 0x00, 0x08, 0x00, 0x09,
+    //     0x6E, 0x13, 0xAA, 0x67, 0x00, 0x00, 0x00, 0x00,
+    //     0xBD, 0xF0, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00,
+    //     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+    //     0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
+    //     0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
+    //     0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F,
+    //     0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
+    // size_t data_length = 64;
+
+    // uint16_t checksum = icmp_checksum2(data, data_length);
+    // printf("%2X%2X\n", (checksum & 0xFF00) >> 8, checksum & 0xFF);
+
     if (argc < 2)
     {
         printf("Usage: %s -i <interface1> [interface2] [interface3] ...\n", argv[0]);
@@ -46,21 +76,8 @@ int main(int argc, char *argv[])
 
     listen_interfaces(interfaces, interface_num);
 
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 10; ++i)
         init_ipv4_subnet_arp();
-
-    // unsigned char addr[4] = {192, 168, 1, 255};
-    // while (1)
-    // {
-    //     Mac_address *raddr = lookup_hardware_address_by_arp(0x0800, addr, 4);
-    //     for (int i = 0; i < 1000000; ++i)
-    //         ;
-    //     if (raddr == NULL)
-    //         continue;
-    //     printf(MAIN_LOG_PREFIX "address is: %2X.%2X.%2X.%2X.%2X.%2X\n", (*raddr)[0],
-    //            (*raddr)[1], (*raddr)[2], (*raddr)[3], (*raddr)[4], (*raddr)[5]);
-    //     break;
-    // }
 
     const char *const interface = "eth0";
     IPV4_address ipv4_address;
